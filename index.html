@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R-PUZZLE | For Retal ❤️</title>
+<style>
+:root{--bg:#100e19;--panel:#211a2d;--pink:#ffafd7;--purple:#d9b5ff;--muted:#c7bad7;--line:#493757;--good:#a9f0cb}
+*{box-sizing:border-box}
+body{margin:0;padding:18px 14px;background:radial-gradient(ellipse at top,#261a35,var(--bg) 65%);color:#fff;font-family:system-ui,sans-serif;min-height:100vh}
+button{font:inherit;cursor:pointer;color:#fff;border:1px solid var(--line);border-radius:13px;background:#2b2038;padding:12px;touch-action:manipulation}
+header{text-align:center;padding:18px 0 24px}
+.logo{font-size:clamp(38px,9vw,64px);font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--purple),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent;margin:0}
+header p,.intro,#galleryCount{color:var(--muted)}
+main{max-width:980px;margin:auto}
+h2{font-size:21px;margin:20px 0 12px}
+.levels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.level{text-align:left;min-height:92px;padding:15px}
+.level strong,.level small{display:block}
+.level strong{font-size:19px}
+.level small{color:var(--muted);margin-top:6px}
+.primary{background:linear-gradient(100deg,var(--purple),var(--pink));color:#21132c;border:0;font-weight:800}
+#gallerySection,#game{display:none;margin-top:26px}
+.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.tile{padding:8px;text-align:left;overflow:hidden}
+.tile img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;display:block}
+.tile span{display:block;padding:9px 3px 3px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:14px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}
+.stat small{display:block;color:var(--muted);font-size:10px}
+.stat strong{display:block;font-size:18px;margin-top:3px}
+#boardWrap,#trayWrap{background:var(--panel);border:1px solid var(--line);padding:12px;border-radius:17px}
+.boardLabel{text-align:center;color:var(--purple);font-size:13px}
+#board{width:min(100%,560px);margin:auto;display:grid;gap:2px;aspect-ratio:1;background:#382b49;border-radius:7px;overflow:hidden}
+.slot{position:relative;min-width:0;min-height:0;aspect-ratio:1;background:#211a2d;border:1px dashed #705a86;overflow:hidden}
+.slot.correct{border:1px solid var(--good)}
+.placedPiece{position:absolute;max-width:none}
+.trayHeading{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px}
+.trayHeading span{font-size:12px;color:var(--muted)}
+#tray{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.piece{position:relative;min-width:0;padding:0;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#382b49;touch-action:manipulation}
+.piece img{display:block;pointer-events:none}
+.piece.selected{outline:3px solid var(--pink)}
+#message{text-align:center;color:var(--pink);font-weight:750;min-height:28px}
+#preview{width:min(100%,260px);border-radius:12px;margin:14px auto;display:block}
+.hidden{display:none!important}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.actions button{flex:1}
+.love-footer{text-align:center;margin:56px auto 0;padding:23px 10px;border-top:1px solid var(--line)}
+.love-footer p{color:var(--pink);font-weight:700}
+.love-footer small{color:var(--muted)}
+#winPanel{background:#30213e;border:1px solid #72578b;border-radius:16px;text-align:center;padding:18px;margin-top:14px}
+#winPanel h3{color:var(--good)}
+@media(min-width:620px){.levels{grid-template-columns:repeat(4,minmax(0,1fr))}.gallery{grid-template-columns:repeat(3,minmax(0,1fr))}#tray{grid-template-columns:repeat(6,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1 class="logo">R-PUZZLE 🧩</h1>
+<p>Every piece has its place.</p>
+<p>A little puzzle world made for Retal ❤️</p>
+</header>
+<main>
+<section id="home">
+<h2>Choose your difficulty</h2>
+<p class="intro">Pick a level, choose a picture, and put every piece in its place.</p>
+<div class="levels">
+<button class="level" data-level="EASY"><strong>🟢 EASY</strong><small>5 pictures</small></button>
+<button class="level" data-level="MEDIUM"><strong>🟡 MEDIUM</strong><small>7 pictures</small></button>
+<button class="level" data-level="HARD"><strong>🔴 HARD</strong><small>10 pictures</small></button>
+<button class="level" data-level="IMPOSSIBLE"><strong>⚫ IMPOSSIBLE</strong><small>15 pictures</small></button>
+</div>
+<section id="gallerySection">
+<h2 id="galleryTitle">Choose your picture</h2>
+<p id="galleryCount"></p>
+<button id="randomBtn" class="primary">🎲 Random Puzzle</button>
+<div id="gallery" class="gallery"></div>
+</section>
+</section>
+<section id="game">
+<h2 id="gameTitle">Your puzzle</h2>
+<div class="stats">
+<div class="stat"><small>TIME</small><strong id="timer">00:00</strong></div>
+<div class="stat"><small>MOVES</small><strong id="moves">0</strong></div>
+<div class="stat"><small>PROGRESS</small><strong id="progress">0/9</strong></div>
+</div>
+<div id="boardWrap">
+<p class="boardLabel">🧩 PUZZLE BOARD — tap a piece, then its correct space</p>
+<div id="board"></div>
+</div>
+<div id="trayWrap" style="margin-top:16px">
+<div class="trayHeading"><strong>🧩 Your pieces</strong><span>Choose a piece below</span></div>
+<div id="tray"></div>
+</div>
+<p id="message" aria-live="polite">Choose a piece and place it in the matching space.</p>
+<div class="actions">
+<button id="previewBtn">👁 Preview</button>
+<button id="shuffleBtn">🔀 Shuffle</button>
+<button id="homeBtn">⌂ Home</button>
+</div>
+<img id="preview" class="hidden" alt="Puzzle preview">
+<div id="winPanel" class="hidden">
+<h3>🎉 PUZZLE COMPLETE!</h3>
+<p id="winStats"></p>
+<button id="againBtn" class="primary">Play Again 🧩</button>
+<button id="nextBtn">Choose another picture</button>
+</div>
+</section>
+</main>
+<footer class="love-footer">
+<p>Made with love, just for you, Retal ❤️</p>
+<small>R-PUZZLE · A little gift made with love.</small>
+</footer>
+<script>
+const photoIds=[
+"photo-1470770841072-f978cf4d019e",
+"photo-1500530855697-b586d89ba3ee",
+"photo-1470252649378-9c29740c9fa8",
+"photo-1501785888041-af3ef285b470",
+"photo-1441974231531-c6227db76b6e",
+"photo-1464822759023-fed622ff2c3b",
+"photo-1500534623283-312aade485b7",
+"photo-1472396961693-142e6e269027",
+"photo-1511497584788-876760111969",
+"photo-1472214103451-9374bd1c798e",
+"photo-1490750967868-88aa4486c946",
+"photo-1490730141103-6cac27aaab94",
+"photo-1462275646964-a0e3386b89fa",
+"photo-1501004318641-b39e6451bec6",
+"photo-1499209974431-9dddcece7f88"
+];
+const imageURL=id=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=85`;
+const levels={
+EASY:{count:5,side:3},
+MEDIUM:{count:7,side:4},
+HARD:{count:10,side:5},
+IMPOSSIBLE:{count:15,side:6}
+};
+const galleries={
+EASY:photoIds.slice(0,5),
+MEDIUM:photoIds.slice(5,12),
+HARD:photoIds.slice(5,15),
+IMPOSSIBLE:photoIds.slice(0,15)
+};
+const $=id=>document.getElementById(id);
+let level="EASY",currentImage="",order=[],fixed=new Set(),moves=0,seconds=0,clock=null,selectedPiece=null;
+
+function stopClock(){if(clock!==null)clearInterval(clock);clock=null}
+function showHome(){
+stopClock();
+$("home").style.display="block";
+$("game").style.display="none";
+$("gallerySection").style.display="none";
+}
+function renderGallery(){
+const gallery=$("gallery");
+gallery.replaceChildren();
+const list=galleries[level];
+$("galleryTitle").textContent=level+" — CHOOSE YOUR IMAGE";
+$("galleryCount").textContent=list.length+" pictures available";
+list.forEach((id,index)=>{
+const tile=document.createElement("button");
+tile.className="tile";
+const img=document.createElement("img");
+img.src=imageURL(id);
+img.alt="Puzzle picture "+(index+1);
+const label=document.createElement("span");
+label.textContent="Picture "+(index+1);
+tile.append(img,label);
+tile.addEventListener("click",()=>startGame(id));
+gallery.append(tile);
+});
+$("gallerySection").style.display="block";
+$("gallerySection").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.querySelectorAll(".level").forEach(btn=>{
+btn.addEventListener("click",()=>{
+level=btn.dataset.level;
+renderGallery();
+});
+});
+$("randomBtn").addEventListener("click",()=>{
+const list=galleries[level];
+startGame(list[Math.floor(Math.random()*list.length)]);
+});
+function startGame(id){
+currentImage=id;
+$("home").style.display="none";
+$("gallerySection").style.display="none";
+$("game").style.display="block";
+$("gameTitle").textContent=level+" PUZZLE";
+$("preview").src=imageURL(id);
+$("preview").classList.add("hidden");
+$("winPanel").classList.add("hidden");
+createPuzzle();
+window.scrollTo({top:0,behavior:"smooth"});
+}
+function shuffleArray(arr){
+for(let i=arr.length-1;i>0;i--){
+const j=Math.floor(Math.random()*(i+1));
+[arr[i],arr[j]]=[arr[j],arr[i]];
+}
+if(arr.every((v,i)=>v===i)&&arr.length>1)[arr[0],arr[1]]=[arr[1],arr[0]];
+return arr;
+}
+function createPuzzle(){
+stopClock();
+const side=levels[level].side,total=side*side;
+order=shuffleArray(Array.from({length:total},(_,i)=>i));
+fixed=new Set();
+selectedPiece=null;
+moves=0;
+seconds=0;
+$("moves").textContent="0";
+$("timer").textContent="00:00";
+$("message").textContent="Choose a piece, then its matching space.";
+$("preview").classList.add("hidden");
+$("winPanel").classList.add("hidden");
+clock=setInterval(()=>{
+seconds++;
+$("timer").textContent=String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0");
+},1000);
+renderBoard();
+renderTray();
+updateProgress();
+}
+function renderBoard(){
+const side=levels[level].side,board=$("board");
+board.style.gridTemplateColumns=`repeat(${side},minmax(0,1fr))`;
+board.replaceChildren();
+for(let i=0;i<side*side;i++){
+const slot=document.createElement("button");
+slot.className="slot";
+slot.dataset.slot=String(i);
+slot.setAttribute("aria-label","Puzzle space "+(i+1));
+if(fixed.has(i)){
+slot.classList.add("correct");
+const img=document.createElement("img");
+img.className="placedPiece";
+img.src=imageURL(currentImage);
+img.alt="";
+img.style.width=(side*100)+"%";
+img.style.height=(side*100)+"%";
+img.style.left=(-(i%side)*100)+"%";
+img.style.top=(-Math.floor(i/side)*100)+"%";
+slot.append(img);
+}
+slot.addEventListener("click",()=>{if(selectedPiece!==null)tryDrop(selectedPiece,i)});
+board.append(slot);
+}
+}
+function renderTray(){
+const tray=$("tray");
+tray.replaceChildren();
+order.forEach(piece=>{
+if(fixed.has(piece))return;
+const side=levels[level].side;
+const btn=document.createElement("button");
+btn.className="piece";
+if(selectedPiece===piece)btn.classList.add("selected");
+btn.setAttribute("aria-label","Puzzle piece "+(piece+1));
+const img=document.createElement("img");
+img.src=imageURL(currentImage);
+img.alt="";
+img.style.width=(side*100)+"%";
+img.style.height=(side*100)+"%";
+img.style.position="absolute";
+img.style.maxWidth="none";
+img.style.left=(-(piece%side)*100)+"%";
+img.style.top=(-Math.floor(piece/side)*100)+"%";
+btn.append(img);
+btn.addEventListener("click",()=>{
+selectedPiece=selectedPiece===piece?null:piece;
+$("message").textContent=selectedPiece===null?"Choose a piece.":"Now tap the matching space on the board.";
+renderTray();
+});
+tray.append(btn);
+});
+}
+function tryDrop(piece,slot){
+if(piece===null||fixed.has(piece))return;
+moves++;
+$("moves").textContent=String(moves);
+if(piece===slot){
+fixed.add(piece);
+selectedPiece=null;
+$("message").textContent="✨ Perfect fit!";
+renderBoard();
+renderTray();
+updateProgress();
+if(fixed.size===order.length)winGame();
+}else{
+$("message").textContent="Not quite! Try another spot 🧩";
+}
+}
+function updateProgress(){
+$("progress").textContent=fixed.size+"/"+(levels[level].side**2);
+}
+function winGame(){
+stopClock();
+$("message").textContent="";
+$("winPanel").classList.remove("hidden");
+$("winStats").textContent="Time: "+$("timer").textContent+" · Moves: "+moves;
+}
+$("previewBtn").addEventListener("click",()=>$("preview").classList.toggle("hidden"));
+$("shuffleBtn").addEventListener("click",createPuzzle);
+$("homeBtn").addEventListener("click",()=>{showHome();window.scrollTo({top:0,behavior:"smooth"})});
+$("againBtn").addEventListener("click",createPuzzle);
+$("nextBtn").addEventListener("click",()=>{showHome();renderGallery();window.scrollTo({top:0,behavior:"smooth"})});
+</script>
+</body>
+</html>
