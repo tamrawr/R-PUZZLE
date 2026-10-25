@@ -33,11 +33,10 @@ h2{font-size:21px;margin:20px 0 12px}
 #boardWrap,#trayWrap{background:var(--panel);border:1px solid var(--line);padding:12px;border-radius:17px}
 .boardLabel{text-align:center;color:var(--purple);font-size:13px}
 #board{width:min(100%,560px);margin:auto;display:grid;gap:2px;aspect-ratio:1;background:#382b49;border-radius:7px;overflow:hidden}
-.slot{position:relative;min-width:0;min-height:0;aspect-ratio:1;background:#211a2d;border:1px dashed #705a86;overflow:hidden}
-.slot.correct{border:1px solid var(--good)}
-.placedPiece{position:absolute;max-width:none}
-.trayHeading{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px}
-.trayHeading span{font-size:12px;color:var(--muted)}
+.slot{position:relative;min-width:0;min-height:0;aspect-ratio:1;background:#211a2d;border:1px dashed #705a86;overflow:hidden;padding:0;border-radius:2px}
+.slot.correct{border:2px solid var(--good)}
+.slot.selected{outline:3px solid var(--pink);z-index:2}
+.placedPiece{position:absolute;max-width:none;pointer-events:none}
 #tray{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .piece{position:relative;min-width:0;padding:0;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#382b49;touch-action:manipulation}
 .piece img{display:block;pointer-events:none}
@@ -61,15 +60,16 @@ h2{font-size:21px;margin:20px 0 12px}
 <p>Every piece has its place.</p>
 <p>A little puzzle world made for Retal ❤️</p>
 </header>
+
 <main>
 <section id="home">
 <h2>Choose your difficulty</h2>
 <p class="intro">Pick a level, choose a picture, and put every piece in its place.</p>
 <div class="levels">
-<button class="level" data-level="EASY"><strong>🟢 EASY</strong><small>5 pictures</small></button>
-<button class="level" data-level="MEDIUM"><strong>🟡 MEDIUM</strong><small>7 pictures</small></button>
-<button class="level" data-level="HARD"><strong>🔴 HARD</strong><small>10 pictures</small></button>
-<button class="level" data-level="IMPOSSIBLE"><strong>⚫ IMPOSSIBLE</strong><small>15 pictures</small></button>
+<button class="level" data-level="EASY"><strong>🟢 EASY</strong><small>5 pictures · 9 pieces</small></button>
+<button class="level" data-level="MEDIUM"><strong>🟡 MEDIUM</strong><small>7 pictures · 16 pieces</small></button>
+<button class="level" data-level="HARD"><strong>🔴 HARD</strong><small>10 pictures · 25 pieces</small></button>
+<button class="level" data-level="IMPOSSIBLE"><strong>⚫ IMPOSSIBLE</strong><small>15 pictures · 36 pieces</small></button>
 </div>
 <section id="gallerySection">
 <h2 id="galleryTitle">Choose your picture</h2>
@@ -78,22 +78,26 @@ h2{font-size:21px;margin:20px 0 12px}
 <div id="gallery" class="gallery"></div>
 </section>
 </section>
+
 <section id="game">
 <h2 id="gameTitle">Your puzzle</h2>
 <div class="stats">
 <div class="stat"><small>TIME</small><strong id="timer">00:00</strong></div>
 <div class="stat"><small>MOVES</small><strong id="moves">0</strong></div>
-<div class="stat"><small>PROGRESS</small><strong id="progress">0/9</strong></div>
+<div class="stat"><small>CORRECT PIECES</small><strong id="progress">0/9</strong></div>
 </div>
 <div id="boardWrap">
-<p class="boardLabel">🧩 PUZZLE BOARD — tap a piece, then its correct space</p>
+<p class="boardLabel">🧩 PUZZLE BOARD — place pieces anywhere!</p>
 <div id="board"></div>
 </div>
 <div id="trayWrap" style="margin-top:16px">
-<div class="trayHeading"><strong>🧩 Your pieces</strong><span>Choose a piece below</span></div>
+<div class="trayHeading" style="display:flex;justify-content:space-between;gap:8px;margin-bottom:10px">
+<strong>🧩 Your pieces</strong>
+<span style="font-size:12px;color:var(--muted)">Tap a piece, then tap a space</span>
+</div>
 <div id="tray"></div>
 </div>
-<p id="message" aria-live="polite">Choose a piece and place it in the matching space.</p>
+<p id="message" aria-live="polite">Choose a piece and tap any space.</p>
 <div class="actions">
 <button id="previewBtn">👁 Preview</button>
 <button id="shuffleBtn">🔀 Shuffle</button>
@@ -108,10 +112,12 @@ h2{font-size:21px;margin:20px 0 12px}
 </div>
 </section>
 </main>
+
 <footer class="love-footer">
 <p>Made with love, just for you, Retal ❤️</p>
 <small>R-PUZZLE · A little gift made with love.</small>
 </footer>
+
 <script>
 const photoIds=[
 "photo-1470770841072-f978cf4d019e",
@@ -130,60 +136,87 @@ const photoIds=[
 "photo-1501004318641-b39e6451bec6",
 "photo-1499209974431-9dddcece7f88"
 ];
+
 const imageURL=id=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=85`;
+
 const levels={
 EASY:{count:5,side:3},
 MEDIUM:{count:7,side:4},
 HARD:{count:10,side:5},
 IMPOSSIBLE:{count:15,side:6}
 };
+
 const galleries={
 EASY:photoIds.slice(0,5),
 MEDIUM:photoIds.slice(5,12),
 HARD:photoIds.slice(5,15),
 IMPOSSIBLE:photoIds.slice(0,15)
 };
-const $=id=>document.getElementById(id);
-let level="EASY",currentImage="",order=[],fixed=new Set(),moves=0,seconds=0,clock=null,selectedPiece=null;
 
-function stopClock(){if(clock!==null)clearInterval(clock);clock=null}
+const $=id=>document.getElementById(id);
+
+let level="EASY";
+let currentImage="";
+let order=[];
+let placed={};
+let selectedPiece=null;
+let selectedSlot=null;
+let moves=0;
+let seconds=0;
+let clock=null;
+
+function stopClock(){
+if(clock!==null)clearInterval(clock);
+clock=null;
+}
+
 function showHome(){
 stopClock();
 $("home").style.display="block";
 $("game").style.display="none";
 $("gallerySection").style.display="none";
 }
+
 function renderGallery(){
 const gallery=$("gallery");
 gallery.replaceChildren();
 const list=galleries[level];
+
 $("galleryTitle").textContent=level+" — CHOOSE YOUR IMAGE";
 $("galleryCount").textContent=list.length+" pictures available";
+
 list.forEach((id,index)=>{
 const tile=document.createElement("button");
 tile.className="tile";
+
 const img=document.createElement("img");
 img.src=imageURL(id);
 img.alt="Puzzle picture "+(index+1);
+
 const label=document.createElement("span");
 label.textContent="Picture "+(index+1);
+
 tile.append(img,label);
 tile.addEventListener("click",()=>startGame(id));
 gallery.append(tile);
 });
+
 $("gallerySection").style.display="block";
 $("gallerySection").scrollIntoView({behavior:"smooth",block:"start"});
 }
+
 document.querySelectorAll(".level").forEach(btn=>{
 btn.addEventListener("click",()=>{
 level=btn.dataset.level;
 renderGallery();
 });
 });
+
 $("randomBtn").addEventListener("click",()=>{
 const list=galleries[level];
 startGame(list[Math.floor(Math.random()*list.length)]);
 });
+
 function startGame(id){
 currentImage=id;
 $("home").style.display="none";
@@ -196,118 +229,199 @@ $("winPanel").classList.add("hidden");
 createPuzzle();
 window.scrollTo({top:0,behavior:"smooth"});
 }
+
 function shuffleArray(arr){
 for(let i=arr.length-1;i>0;i--){
 const j=Math.floor(Math.random()*(i+1));
 [arr[i],arr[j]]=[arr[j],arr[i]];
 }
-if(arr.every((v,i)=>v===i)&&arr.length>1)[arr[0],arr[1]]=[arr[1],arr[0]];
 return arr;
 }
+
 function createPuzzle(){
 stopClock();
-const side=levels[level].side,total=side*side;
+
+const total=levels[level].side**2;
 order=shuffleArray(Array.from({length:total},(_,i)=>i));
-fixed=new Set();
+placed={};
 selectedPiece=null;
+selectedSlot=null;
 moves=0;
 seconds=0;
+
 $("moves").textContent="0";
 $("timer").textContent="00:00";
-$("message").textContent="Choose a piece, then its matching space.";
+$("message").textContent="Choose a piece, then tap any space.";
 $("preview").classList.add("hidden");
 $("winPanel").classList.add("hidden");
+
 clock=setInterval(()=>{
 seconds++;
-$("timer").textContent=String(Math.floor(seconds/60)).padStart(2,"0")+":"+String(seconds%60).padStart(2,"0");
+$("timer").textContent=
+String(Math.floor(seconds/60)).padStart(2,"0")+":"+
+String(seconds%60).padStart(2,"0");
 },1000);
+
 renderBoard();
 renderTray();
 updateProgress();
 }
-function renderBoard(){
-const side=levels[level].side,board=$("board");
-board.style.gridTemplateColumns=`repeat(${side},minmax(0,1fr))`;
-board.replaceChildren();
-for(let i=0;i<side*side;i++){
-const slot=document.createElement("button");
-slot.className="slot";
-slot.dataset.slot=String(i);
-slot.setAttribute("aria-label","Puzzle space "+(i+1));
-if(fixed.has(i)){
-slot.classList.add("correct");
+
+function makeCrop(piece,container){
+const side=levels[level].side;
 const img=document.createElement("img");
-img.className="placedPiece";
 img.src=imageURL(currentImage);
 img.alt="";
+img.style.position="absolute";
+img.style.maxWidth="none";
 img.style.width=(side*100)+"%";
 img.style.height=(side*100)+"%";
-img.style.left=(-(i%side)*100)+"%";
-img.style.top=(-Math.floor(i/side)*100)+"%";
-slot.append(img);
+img.style.left=(-(piece%side)*100)+"%";
+img.style.top=(-Math.floor(piece/side)*100)+"%";
+img.style.pointerEvents="none";
+container.append(img);
 }
-slot.addEventListener("click",()=>{if(selectedPiece!==null)tryDrop(selectedPiece,i)});
+
+function renderBoard(){
+const side=levels[level].side;
+const board=$("board");
+
+board.style.gridTemplateColumns=`repeat(${side},minmax(0,1fr))`;
+board.replaceChildren();
+
+for(let slotIndex=0;slotIndex<side*side;slotIndex++){
+const slot=document.createElement("button");
+slot.className="slot";
+slot.setAttribute("aria-label","Puzzle space "+(slotIndex+1));
+
+if(placed[slotIndex]!==undefined){
+const piece=placed[slotIndex];
+makeCrop(piece,slot);
+
+if(piece===slotIndex)slot.classList.add("correct");
+if(selectedSlot===slotIndex)slot.classList.add("selected");
+}
+
+slot.addEventListener("click",()=>handleSlot(slotIndex));
 board.append(slot);
 }
 }
+
 function renderTray(){
 const tray=$("tray");
 tray.replaceChildren();
+
+const piecesOnBoard=new Set(Object.values(placed));
+
 order.forEach(piece=>{
-if(fixed.has(piece))return;
-const side=levels[level].side;
+if(piecesOnBoard.has(piece))return;
+
 const btn=document.createElement("button");
 btn.className="piece";
 if(selectedPiece===piece)btn.classList.add("selected");
 btn.setAttribute("aria-label","Puzzle piece "+(piece+1));
-const img=document.createElement("img");
-img.src=imageURL(currentImage);
-img.alt="";
-img.style.width=(side*100)+"%";
-img.style.height=(side*100)+"%";
-img.style.position="absolute";
-img.style.maxWidth="none";
-img.style.left=(-(piece%side)*100)+"%";
-img.style.top=(-Math.floor(piece/side)*100)+"%";
-btn.append(img);
+
+makeCrop(piece,btn);
+
 btn.addEventListener("click",()=>{
 selectedPiece=selectedPiece===piece?null:piece;
-$("message").textContent=selectedPiece===null?"Choose a piece.":"Now tap the matching space on the board.";
+selectedSlot=null;
+$("message").textContent=selectedPiece===null
+?"Choose a piece."
+:"Now tap ANY space on the board — even if it looks wrong!";
 renderTray();
+renderBoard();
 });
+
 tray.append(btn);
 });
 }
-function tryDrop(piece,slot){
-if(piece===null||fixed.has(piece))return;
-moves++;
-$("moves").textContent=String(moves);
-if(piece===slot){
-fixed.add(piece);
+
+function handleSlot(slotIndex){
+if(selectedPiece!==null){
+const oldPiece=placed[slotIndex];
+
+// If the space already has a piece, return that piece to the tray.
+if(oldPiece!==undefined){
+delete placed[slotIndex];
+}
+
+// Put the selected piece in the chosen space, even if incorrect.
+placed[slotIndex]=selectedPiece;
 selectedPiece=null;
-$("message").textContent="✨ Perfect fit!";
+selectedSlot=null;
+moves++;
+
+$("moves").textContent=String(moves);
+$("message").textContent="Piece placed! Keep going 🧩";
+
 renderBoard();
 renderTray();
 updateProgress();
-if(fixed.size===order.length)winGame();
-}else{
-$("message").textContent="Not quite! Try another spot 🧩";
+checkWin();
+return;
+}
+
+// Tap an occupied space to select the piece and move it elsewhere.
+if(placed[slotIndex]!==undefined){
+const piece=placed[slotIndex];
+delete placed[slotIndex];
+selectedPiece=piece;
+selectedSlot=slotIndex;
+$("message").textContent="Piece selected! Tap another space to move it.";
+renderBoard();
+renderTray();
 }
 }
+
 function updateProgress(){
-$("progress").textContent=fixed.size+"/"+(levels[level].side**2);
+const total=levels[level].side**2;
+let correct=0;
+
+Object.keys(placed).forEach(slot=>{
+if(placed[slot]===Number(slot))correct++;
+});
+
+$("progress").textContent=correct+"/"+total;
 }
+
+function checkWin(){
+const total=levels[level].side**2;
+if(Object.keys(placed).length!==total)return;
+
+for(let i=0;i<total;i++){
+if(placed[i]!==i)return;
+}
+
+winGame();
+}
+
 function winGame(){
 stopClock();
-$("message").textContent="";
+$("message").textContent="✨ Every piece is in the right place!";
 $("winPanel").classList.remove("hidden");
-$("winStats").textContent="Time: "+$("timer").textContent+" · Moves: "+moves;
+$("winStats").textContent=
+"Time: "+$("timer").textContent+" · Moves: "+moves;
 }
-$("previewBtn").addEventListener("click",()=>$("preview").classList.toggle("hidden"));
+
+$("previewBtn").addEventListener("click",()=>{
+$("preview").classList.toggle("hidden");
+});
+
 $("shuffleBtn").addEventListener("click",createPuzzle);
-$("homeBtn").addEventListener("click",()=>{showHome();window.scrollTo({top:0,behavior:"smooth"})});
+
+$("homeBtn").addEventListener("click",()=>{
+showHome();
+window.scrollTo({top:0,behavior:"smooth"});
+});
+
 $("againBtn").addEventListener("click",createPuzzle);
-$("nextBtn").addEventListener("click",()=>{showHome();renderGallery();window.scrollTo({top:0,behavior:"smooth"})});
+
+$("nextBtn").addEventListener("click",()=>{
+showHome();
+renderGallery();
+window.scrollTo({top:0,behavior:"smooth"});
+});
 </script>
 </body>
 </html>
