@@ -104,12 +104,16 @@ h2{font-size:21px;margin:20px 0 12px}
 <button id="homeBtn">⌂ Home</button>
 </div>
 <img id="preview" class="hidden" alt="Puzzle preview">
+
 <div id="winPanel" class="hidden">
-<h3>🎉 PUZZLE COMPLETE!</h3>
+<h3>🎉 YOU DID IT, RETAL! 🎉</h3>
+<p>كل القطع لقت مكانها الصحيح! 🧩❤️</p>
+<p>فخورة فيك يا رتال، تستاهلين كل الأشياء الحلوة.</p>
 <p id="winStats"></p>
 <button id="againBtn" class="primary">Play Again 🧩</button>
-<button id="nextBtn">Choose another picture</button>
+<button id="nextBtn">Choose another picture ❤️</button>
 </div>
+
 </section>
 </main>
 
@@ -337,42 +341,65 @@ tray.append(btn);
 });
 }
 
+
 function handleSlot(slotIndex){
-if(selectedPiece!==null){
-const oldPiece=placed[slotIndex];
+  // القطعة المثبتة ما تتحرك أبدًا
+  if(lockedPieces.has(slotIndex)){
+    $("message").textContent =
+      "✨ This piece is already locked in place!";
+    return;
+  }
 
-// If the space already has a piece, return that piece to the tray.
-if(oldPiece!==undefined){
-delete placed[slotIndex];
+  if(selectedPiece!==null){
+    const oldPiece=placed[slotIndex];
+
+    // لا نستبدل قطعة صحيحة ومثبتة
+    if(oldPiece!==undefined &&
+       lockedPieces.has(slotIndex)){
+      return;
+    }
+
+    if(oldPiece!==undefined){
+      delete placed[slotIndex];
+    }
+
+    placed[slotIndex]=selectedPiece;
+    selectedPiece=null;
+    selectedSlot=null;
+    moves++;
+
+    // إذا القطعة في مكانها الصحيح، ثبّتيها
+    if(placed[slotIndex]===slotIndex){
+      lockedPieces.add(slotIndex);
+      $("message").textContent =
+        "🔒 Correct! This piece is locked forever!";
+    } else {
+      $("message").textContent =
+        "Not quite! You can move this piece again.";
+    }
+
+    $("moves").textContent=String(moves);
+
+    renderBoard();
+    renderTray();
+    updateProgress();
+    checkWin();
+    return;
+  }
+
+  // اختيار قطعة موجودة في اللوحة لتحريكها
+  if(placed[slotIndex]!==undefined){
+    selectedPiece=placed[slotIndex];
+    selectedSlot=slotIndex;
+
+    $("message").textContent =
+      "Choose another space to move this piece.";
+
+    renderBoard();
+    renderTray();
+  }
 }
 
-// Put the selected piece in the chosen space, even if incorrect.
-placed[slotIndex]=selectedPiece;
-selectedPiece=null;
-selectedSlot=null;
-moves++;
-
-$("moves").textContent=String(moves);
-$("message").textContent="Piece placed! Keep going 🧩";
-
-renderBoard();
-renderTray();
-updateProgress();
-checkWin();
-return;
-}
-
-// Tap an occupied space to select the piece and move it elsewhere.
-if(placed[slotIndex]!==undefined){
-const piece=placed[slotIndex];
-delete placed[slotIndex];
-selectedPiece=piece;
-selectedSlot=slotIndex;
-$("message").textContent="Piece selected! Tap another space to move it.";
-renderBoard();
-renderTray();
-}
-}
 
 function updateProgress(){
 const total=levels[level].side**2;
