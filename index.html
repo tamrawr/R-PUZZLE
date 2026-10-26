@@ -343,38 +343,55 @@ tray.append(btn);
 });
 }
 
-
+  
 function handleSlot(slotIndex){
-  // القطعة المثبتة ما تتحرك أبدًا
+
+  // منع تحريك القطعة المثبتة
   if(lockedPieces.has(slotIndex)){
     $("message").textContent =
-      "✨ This piece is already locked in place!";
+      "🔒 هذه القطعة ثابتة في مكانها!";
     return;
   }
 
-  if(selectedPiece!==null){
-    const oldPiece=placed[slotIndex];
+  // وضع قطعة مختارة من الصندوق أو نقلها
+  if(selectedPiece !== null){
 
-    if(oldPiece!==undefined){
+    // منع تكرار القطعة في اللوحة
+    if(Object.values(placed).includes(selectedPiece)){
+      if(selectedSlot !== null){
+        delete placed[selectedSlot];
+      } else {
+        selectedPiece = null;
+        selectedSlot = null;
+        renderBoard();
+        renderTray();
+        return;
+      }
+    }
+
+    // إذا كان المكان مشغولًا بقطعة أخرى
+    const oldPiece = placed[slotIndex];
+
+    if(oldPiece !== undefined){
       delete placed[slotIndex];
     }
 
-    placed[slotIndex]=selectedPiece;
-    selectedPiece=null;
-    selectedSlot=null;
+    placed[slotIndex] = selectedPiece;
+
+    selectedPiece = null;
+    selectedSlot = null;
     moves++;
 
-    // إذا القطعة في مكانها الصحيح، ثبّتيها
-    if(placed[slotIndex]===slotIndex){
+    if(placed[slotIndex] === slotIndex){
       lockedPieces.add(slotIndex);
       $("message").textContent =
-        "🔒 Correct! This piece is locked forever!";
+        "🔒 ممتاز! القطعة الصحيحة ثبتت بمكانها!";
     } else {
       $("message").textContent =
-        "Not quite! You can move this piece again.";
+        "🧩 مو مكانها الصحيح، تقدرين تحركينها.";
     }
 
-    $("moves").textContent=String(moves);
+    $("moves").textContent = String(moves);
 
     renderBoard();
     renderTray();
@@ -384,18 +401,21 @@ function handleSlot(slotIndex){
   }
 
   // اختيار قطعة موجودة في اللوحة لتحريكها
-  if(placed[slotIndex]!==undefined){
-    selectedPiece=placed[slotIndex];
-    selectedSlot=slotIndex;
+  if(placed[slotIndex] !== undefined){
+
+    selectedPiece = placed[slotIndex];
+    selectedSlot = slotIndex;
+
+    // إزالة القطعة من مكانها القديم أثناء نقلها
+    delete placed[slotIndex];
 
     $("message").textContent =
-      "Choose another space to move this piece.";
+      "🧩 اختاري المكان الجديد للقطعة.";
 
     renderBoard();
     renderTray();
   }
 }
-
 
 function updateProgress(){
 const total=levels[level].side**2;
