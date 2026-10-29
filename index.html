@@ -123,25 +123,50 @@ h2{font-size:21px;margin:20px 0 12px}
 </footer>
 
 <script>
-const photoIds=[
-"photo-1470770841072-f978cf4d019e",
-"photo-1500530855697-b586d89ba3ee",
-"photo-1470252649378-9c29740c9fa8",
-"photo-1501785888041-af3ef285b470",
-"photo-1441974231531-c6227db76b6e",
-"photo-1464822759023-fed622ff2c3b",
-"photo-1500534623283-312aade485b7",
-"photo-1472396961693-142e6e269027",
-"photo-1511497584788-876760111969",
-"photo-1472214103451-9374bd1c798e",
-"photo-1490750967868-88aa4486c946",
-"photo-1490730141103-6cac27aaab94",
-"photo-1462275646964-a0e3386b89fa",
-"photo-1501004318641-b39e6451bec6",
-"photo-1499209974431-9dddcece7f88"
+const photoIds = [
+  "images/esay1.PNG.jpg",
+  "images/esay2.PNG.jpg",
+  "images/esay3.JPEG.jpg",
+  "images/esay4.JPEG.jpg",
+  "images/esay5.PNG.jpg",
+
+  "images/medium1. JPEG.jpg",
+  "images/medium2.JPEG.jpg",
+  "images/medium3.JPEG.jpg",
+  "images/medium4.JPEG.jpg",
+  "images/medium5.JPEG.jpg",
+  "images/medium6.JPEG.jpg",
+  "images/medium7.JPEG.jpg",
+
+  "images/hard1.JPEG.jpg",
+  "images/hard2.JPEG.jpg",
+  "images/hard3.JPEG.jpg",
+  "images/hard4.JPEG.jpg",
+  "images/hard5.PNG.jpg",
+  "images/hard6.JPEG.jpg",
+  "images/hard7.JPEG.jpg",
+  "images/hard8.PNG.jpg",
+  "images/hard9.PNG.jpg",
+  "images/hard10.JPEG.jpg",
+
+  "images/impossible1.PNG.jpg",
+  "images/impossible2.PNG.jpg",
+  "images/impossible3.PNG.jpg",
+  "images/impossible4.PNG.jpg",
+  "images/impossible5.PNG.jpg",
+  "images/impossible6.JPEG.jpg",
+  "images/impossible7.PNG.jpg",
+  "images/impossible8.JPEG.jpg",
+  "images/impossible9.PNG.jpg",
+  "images/impossible10.PNG.jpg",
+  "images/impossible11.JPEG.jpg",
+  "images/impossible12.JPEG.jpg",
+  "images/impossible13.JPEG.jpg",
+  "images/impossible14.PNG.jpg",
+  "images/impossible15.PNG.jpg"
 ];
 
-const imageURL=id=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=85`;
+const imageURL = path => path;
 
 const levels={
 EASY:{count:5,side:3},
@@ -150,11 +175,11 @@ HARD:{count:10,side:5},
 IMPOSSIBLE:{count:15,side:6}
 };
 
-const galleries={
-EASY:photoIds.slice(0,5),
-MEDIUM:photoIds.slice(5,12),
-HARD:photoIds.slice(5,15),
-IMPOSSIBLE:photoIds.slice(0,15)
+const galleries = {
+  EASY: photoIds.slice(0, 5),
+  MEDIUM: photoIds.slice(5, 12),
+  HARD: photoIds.slice(12, 22),
+  IMPOSSIBLE: photoIds.slice(22, 37)
 };
 
 const $=id=>document.getElementById(id);
